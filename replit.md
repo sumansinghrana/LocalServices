@@ -10,12 +10,12 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Backend API**: Python 3.11 + FastAPI + uvicorn (located in `artifacts/python-api/`)
+- **Database**: PostgreSQL (managed via raw psycopg2 in Python backend; schema auto-created on startup)
+- **Validation**: Pydantic v2 models
 - **Frontend**: React + Vite (react-query, framer-motion, react-hook-form, tailwind)
+
+> Note: The TypeScript Express backend (`artifacts/api-server/src`) is kept as a rollback reference but is no longer the active backend. The active backend is `artifacts/python-api/`.
 
 ## Structure
 
