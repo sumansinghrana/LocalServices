@@ -3,10 +3,16 @@ import { MapPin, Phone, MessageCircle, Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useSiteConfig } from "@/hooks/useConfig";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { data: config } = useSiteConfig();
+
+  const phone = config?.phone || "+91-9999999999";
+  const whatsapp = config?.whatsapp || "919999999999";
+  const locationLabel = config?.location || "Bidholi & UPES Area, Dehradun";
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -19,7 +25,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Top Banner */}
       <div className="bg-secondary text-secondary-foreground py-2 px-4 text-sm font-medium flex justify-center items-center gap-2">
         <MapPin className="w-4 h-4" />
-        Serving Bidholi & UPES Area, Dehradun
+        Serving {locationLabel}
       </div>
 
       {/* Navbar */}
@@ -107,9 +113,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="font-display font-bold text-xl text-foreground">
               Local<span className="text-primary">Services</span>.com
             </span>
-            <p className="text-muted-foreground mt-2 font-medium">Your trusted local marketplace in Bidholi.</p>
+            <p className="text-muted-foreground mt-2 font-medium">{config?.tagline || "Your trusted local marketplace in Bidholi."}</p>
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-6 items-center">
+            <a href={`tel:${phone}`} className="text-muted-foreground hover:text-primary transition-colors font-medium flex items-center gap-2">
+              <Phone className="w-4 h-4" /> {phone}
+            </a>
             <Link href="/admin" className="text-muted-foreground hover:text-primary transition-colors font-medium">
               Admin Portal
             </Link>
@@ -120,14 +129,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Floating Action Buttons */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
         <a
-          href="tel:+919999999999"
+          href={`tel:${phone}`}
           className="w-14 h-14 bg-secondary text-white rounded-full flex items-center justify-center shadow-lg shadow-secondary/30 hover:scale-110 transition-transform duration-300"
-          title="Call Us"
+          title={`Call Us: ${phone}`}
         >
           <Phone className="w-6 h-6" />
         </a>
         <a
-          href="https://wa.me/919999999999"
+          href={`https://wa.me/${whatsapp}`}
           target="_blank"
           rel="noopener noreferrer"
           className="w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-lg shadow-[#25D366]/30 hover:scale-110 transition-transform duration-300"

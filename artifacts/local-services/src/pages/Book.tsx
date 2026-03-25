@@ -7,24 +7,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, CalendarIcon } from "lucide-react";
+import { CheckCircle2, CalendarIcon, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useServicesConfig } from "@/hooks/useConfig";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
   phone: z.string().min(10, "Valid phone number required"),
   address: z.string().min(5, "Address is required"),
-  service: z.string().min(2, "Please specify the service"),
+  service: z.string().min(2, "Please select a service"),
   date: z.string().min(1, "Date is required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Book() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const initialService = searchParams.get("service") || "";
   const { toast } = useToast();
+  const { data: services, isLoading: loadingServices } = useServicesConfig();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -120,14 +122,43 @@ export default function Book() {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-foreground">Service Required</label>
-              <Input 
-                placeholder="e.g. Geyser Repair, Full Home Cleaning" 
-                {...form.register("service")} 
-                error={!!form.formState.errors.service}
-              />
-               {form.formState.errors.service && (
-                  <p className="text-sm text-destructive font-medium">{form.formState.errors.service.message}</p>
-                )}
+              {loadingServices ? (
+                <div className="flex items-center gap-2 text-muted-foreground py-3">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Loading services...</span>
+                </div>
+              ) : (
+                <select
+                  {...form.register("service")}
+                  className={`flex w-full rounded-xl border-2 bg-white px-4 py-3 text-base ring-offset-background focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 ${
+                    form.formState.errors.service ? "border-destructive" : "border-border"
+                  }`}
+                >
+                  <option value="">— Select a service —</option>
+                  {services && services.length > 0 && (
+                    <>
+                      <optgroup label="Repairs & Maintenance">
+                        {services.filter(s => s.category === "repairs").map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Cleaning">
+                        {services.filter(s => s.category === "cleaning").map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Painting & Waterproofing">
+                        {services.filter(s => s.category === "painting").map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </optgroup>
+                    </>
+                  )}
+                </select>
+              )}
+              {form.formState.errors.service && (
+                <p className="text-sm text-destructive font-medium">{form.formState.errors.service.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -141,21 +172,23 @@ export default function Book() {
                 />
                 <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               </div>
-               {form.formState.errors.date && (
-                  <p className="text-sm text-destructive font-medium">{form.formState.errors.date.message}</p>
-                )}
+              {form.formState.errors.date && (
+                <p className="text-sm text-destructive font-medium">{form.formState.errors.date.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-foreground">Full Address (Bidholi / UPES Area)</label>
               <textarea 
-                className={`flex w-full rounded-xl border-2 bg-white px-4 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 transition-all duration-200 min-h-[100px] resize-y ${form.formState.errors.address ? 'border-destructive' : 'border-border'}`}
+                className={`flex w-full rounded-xl border-2 bg-white px-4 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 transition-all duration-200 min-h-[100px] resize-y ${
+                  form.formState.errors.address ? "border-destructive" : "border-border"
+                }`}
                 placeholder="Room no, Hostel/PG name, Landmark"
                 {...form.register("address")}
               />
-               {form.formState.errors.address && (
-                  <p className="text-sm text-destructive font-medium">{form.formState.errors.address.message}</p>
-                )}
+              {form.formState.errors.address && (
+                <p className="text-sm text-destructive font-medium">{form.formState.errors.address.message}</p>
+              )}
             </div>
 
             <Button type="submit" size="lg" className="w-full text-lg h-14 mt-4" isLoading={isPending}>
