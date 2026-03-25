@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
   useListBookings, useDeleteBooking, 
-  useListListings, useDeleteListing,
+  useListListings, useDeleteListing, useCreateListing,
   useListVendorSubmissions, useDeleteVendorSubmission 
 } from "@workspace/api-client-react";
 import { format } from "date-fns";
@@ -10,13 +10,18 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Lock, Calendar, Home, Users, Loader2, Settings, Wrench, Plus, Phone, MessageCircle, MapPin, FileText } from "lucide-react";
+import { Trash2, Lock, Calendar, Home, Users, Loader2, Settings, Wrench, Plus, Phone, MessageCircle, MapPin, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { useSiteConfig, useServicesConfig, useUpdateConfig, useAddService, useDeleteService } from "@/hooks/useConfig";
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [activeTab, setActiveTab] = useState<"bookings" | "listings" | "vendors" | "settings" | "services">("bookings");
+  const [showAddListing, setShowAddListing] = useState(false);
+  const [listingForm, setListingForm] = useState({
+    title: "", type: "pg" as "pg" | "hostel" | "room",
+    price: "", location: "", contact: "", description: "", imageUrl: ""
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -44,6 +49,36 @@ export default function Admin() {
       onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/listings"] }); toast({ title: "Deleted" }); }
     }
   });
+  const createListing = useCreateListing({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/listings"] });
+        toast({ title: "Listing added!", description: "It is now visible on the PG/Hostels page." });
+        setListingForm({ title: "", type: "pg", price: "", location: "", contact: "", description: "", imageUrl: "" });
+        setShowAddListing(false);
+      },
+      onError: () => toast({ variant: "destructive", title: "Failed to add listing" }),
+    }
+  });
+
+  const handleAddListing = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!listingForm.title || !listingForm.price || !listingForm.location || !listingForm.contact) {
+      toast({ variant: "destructive", title: "Please fill in all required fields" });
+      return;
+    }
+    createListing.mutate({
+      data: {
+        title: listingForm.title,
+        type: listingForm.type,
+        price: parseFloat(listingForm.price),
+        location: listingForm.location,
+        contact: listingForm.contact,
+        description: listingForm.description || undefined,
+        imageUrl: listingForm.imageUrl || undefined,
+      }
+    });
+  };
   const delVendor = useDeleteVendorSubmission({
     mutation: {
       onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/vendor-submissions"] }); toast({ title: "Deleted" }); }
@@ -188,40 +223,152 @@ export default function Admin() {
         </Card>
       )}
 
-      {/* LISTINGS TABLE */}
+      {/* LISTINGS TAB */}
       {activeTab === "listings" && (
-        <Card className="overflow-hidden border-none shadow-xl bg-white">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-muted text-muted-foreground font-bold uppercase text-xs tracking-wider border-b border-border">
-                <tr>
-                  <th className="p-4">Title</th>
-                  <th className="p-4">Type</th>
-                  <th className="p-4">Price</th>
-                  <th className="p-4">Contact</th>
-                  <th className="p-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {loadingListings && <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>}
-                {!loadingListings && !listings?.length && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No listings yet</td></tr>}
-                {listings?.map(l => (
-                  <tr key={l.id} className="hover:bg-muted/30">
-                    <td className="p-4 font-bold">{l.title}</td>
-                    <td className="p-4 uppercase text-xs font-bold text-muted-foreground">{l.type}</td>
-                    <td className="p-4 font-medium text-green-600">₹{l.price}/mo</td>
-                    <td className="p-4">{l.contact}</td>
-                    <td className="p-4 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => delListing.mutate({ id: l.id })} disabled={delListing.isPending}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </td>
+        <div className="space-y-6">
+          {/* Add New Listing */}
+          <Card className="border-none shadow-xl bg-white">
+            <CardContent className="p-6">
+              <button
+                onClick={() => setShowAddListing(!showAddListing)}
+                className="flex w-full items-center justify-between"
+              >
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-primary" /> Add New PG / Hostel / Room Listing
+                </h2>
+                {showAddListing ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+              </button>
+
+              {showAddListing && (
+                <form onSubmit={handleAddListing} className="mt-6 space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm font-bold">Title <span className="text-destructive">*</span></label>
+                      <Input
+                        placeholder="e.g. Sunrise PG for Boys"
+                        value={listingForm.title}
+                        onChange={e => setListingForm({ ...listingForm, title: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-bold">Type <span className="text-destructive">*</span></label>
+                      <select
+                        value={listingForm.type}
+                        onChange={e => setListingForm({ ...listingForm, type: e.target.value as "pg" | "hostel" | "room" })}
+                        className="flex w-full rounded-xl border-2 border-border bg-white px-4 py-2.5 text-base focus:outline-none focus:border-primary transition-all"
+                      >
+                        <option value="pg">PG</option>
+                        <option value="hostel">Hostel</option>
+                        <option value="room">Room</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm font-bold">Monthly Rent (₹) <span className="text-destructive">*</span></label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 5500"
+                        value={listingForm.price}
+                        onChange={e => setListingForm({ ...listingForm, price: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-bold">Contact Number <span className="text-destructive">*</span></label>
+                      <Input
+                        placeholder="e.g. +91-9876543210"
+                        value={listingForm.contact}
+                        onChange={e => setListingForm({ ...listingForm, contact: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm font-bold">Location <span className="text-destructive">*</span></label>
+                    <Input
+                      placeholder="e.g. Near UPES Gate 1, Bidholi"
+                      value={listingForm.location}
+                      onChange={e => setListingForm({ ...listingForm, location: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm font-bold">Description</label>
+                    <textarea
+                      className="flex w-full rounded-xl border-2 border-border bg-white px-4 py-3 text-base placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-all min-h-[80px] resize-y"
+                      placeholder="Describe the PG/Hostel (facilities, rules, amenities...)"
+                      value={listingForm.description}
+                      onChange={e => setListingForm({ ...listingForm, description: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm font-bold">Image URL <span className="text-muted-foreground font-normal">(optional)</span></label>
+                    <Input
+                      placeholder="https://... or leave blank for default image"
+                      value={listingForm.imageUrl}
+                      onChange={e => setListingForm({ ...listingForm, imageUrl: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button type="submit" isLoading={createListing.isPending} className="flex-1">
+                      <Plus className="w-4 h-4 mr-1" /> Add Listing
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setShowAddListing(false)} className="flex-1">
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Listings Table */}
+          <Card className="overflow-hidden border-none shadow-xl bg-white">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-muted text-muted-foreground font-bold uppercase text-xs tracking-wider border-b border-border">
+                  <tr>
+                    <th className="p-4">Title</th>
+                    <th className="p-4">Type</th>
+                    <th className="p-4">Price</th>
+                    <th className="p-4">Location</th>
+                    <th className="p-4">Contact</th>
+                    <th className="p-4 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {loadingListings && <tr><td colSpan={6} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>}
+                  {!loadingListings && !listings?.length && (
+                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No listings yet. Add one above!</td></tr>
+                  )}
+                  {listings?.map(l => (
+                    <tr key={l.id} className="hover:bg-muted/30">
+                      <td className="p-4 font-bold max-w-[160px] truncate">{l.title}</td>
+                      <td className="p-4">
+                        <span className={`uppercase text-xs font-bold px-2 py-1 rounded ${
+                          l.type === "pg" ? "bg-purple-100 text-purple-700" :
+                          l.type === "hostel" ? "bg-blue-100 text-blue-700" :
+                          "bg-green-100 text-green-700"
+                        }`}>{l.type}</span>
+                      </td>
+                      <td className="p-4 font-medium text-green-600">₹{l.price}/mo</td>
+                      <td className="p-4 text-muted-foreground max-w-[150px] truncate">{l.location}</td>
+                      <td className="p-4">{l.contact}</td>
+                      <td className="p-4 text-right">
+                        <Button variant="ghost" size="icon" onClick={() => delListing.mutate({ id: l.id })} disabled={delListing.isPending}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* VENDORS TABLE */}
