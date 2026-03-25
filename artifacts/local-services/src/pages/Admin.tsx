@@ -373,41 +373,120 @@ export default function Admin() {
 
       {/* VENDORS TABLE */}
       {activeTab === "vendors" && (
-        <Card className="overflow-hidden border-none shadow-xl bg-white">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-muted text-muted-foreground font-bold uppercase text-xs tracking-wider border-b border-border">
-                <tr>
-                  <th className="p-4">Provider</th>
-                  <th className="p-4">Submission Type</th>
-                  <th className="p-4">Details</th>
-                  <th className="p-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {loadingVendors && <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></td></tr>}
-                {!loadingVendors && !vendors?.length && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No vendor submissions yet</td></tr>}
-                {vendors?.map(v => (
-                  <tr key={v.id} className="hover:bg-muted/30">
-                    <td className="p-4">
-                      <div className="font-bold">{v.name}</div>
-                      <div className="text-muted-foreground text-xs">{v.phone}</div>
-                    </td>
-                    <td className="p-4 uppercase text-xs font-bold">{v.submissionType}</td>
-                    <td className="p-4 text-muted-foreground">
-                      {v.submissionType === 'service' ? `${v.serviceCategory} - ${v.serviceDescription?.substring(0, 30)}...` : `${v.roomType} @ ₹${v.roomPrice}`}
-                    </td>
-                    <td className="p-4 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => delVendor.mutate({ id: v.id })} disabled={delVendor.isPending}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <div className="space-y-4">
+          {loadingVendors && (
+            <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          )}
+          {!loadingVendors && !vendors?.length && (
+            <Card className="border-none shadow-xl bg-white">
+              <CardContent className="p-12 text-center text-muted-foreground">
+                <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p className="font-medium">No partner applications yet.</p>
+                <p className="text-sm mt-1">Submissions from "Partner with us" will appear here.</p>
+              </CardContent>
+            </Card>
+          )}
+          {vendors?.map(v => (
+            <Card key={v.id} className="border-none shadow-xl bg-white overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 ${v.submissionType === 'service' ? 'bg-orange-500' : 'bg-teal-500'}`}>
+                      {v.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg leading-tight">{v.name}</h3>
+                      <a href={`tel:${v.phone}`} className="text-primary font-medium text-sm flex items-center gap-1 hover:underline">
+                        <Phone className="w-3 h-3" /> {v.phone}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${v.submissionType === 'service' ? 'bg-orange-100 text-orange-700' : 'bg-teal-100 text-teal-700'}`}>
+                      {v.submissionType === 'service' ? '🔧 Service Provider' : '🏠 Room / PG Owner'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {v.createdAt ? new Date(v.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-border pt-4">
+                  {v.submissionType === 'service' ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Category</span>
+                        <span className="text-sm font-medium capitalize">{v.serviceCategory || '—'}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Description</span>
+                        <p className="text-sm mt-1 text-foreground">{v.serviceDescription || '—'}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <div>
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Property</span>
+                        <p className="text-sm font-medium mt-0.5">{v.roomTitle || '—'}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Type</span>
+                        <p className="text-sm font-medium mt-0.5 capitalize">{v.roomType || '—'}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Rent</span>
+                        <p className="text-sm font-medium mt-0.5 text-green-600">₹{v.roomPrice ?? '—'}/mo</p>
+                      </div>
+                      {v.roomLocation && (
+                        <div className="sm:col-span-3 flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5" /> {v.roomLocation}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 flex items-center gap-3 flex-wrap">
+                  <a href={`tel:${v.phone}`}>
+                    <Button size="sm" variant="outline" className="gap-1">
+                      <Phone className="w-3.5 h-3.5" /> Call
+                    </Button>
+                  </a>
+                  <a href={`https://wa.me/${v.phone?.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
+                    <Button size="sm" variant="outline" className="gap-1 text-green-600 border-green-300 hover:bg-green-50">
+                      <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                    </Button>
+                  </a>
+                  {v.submissionType === 'room' && v.roomTitle && (
+                    <Button
+                      size="sm"
+                      className="gap-1 bg-teal-600 hover:bg-teal-700"
+                      onClick={() => {
+                        createListing.mutate({
+                          data: {
+                            title: v.roomTitle!,
+                            type: (v.roomType as "pg" | "hostel" | "room") || "room",
+                            price: v.roomPrice ?? 0,
+                            location: v.roomLocation || "",
+                            contact: v.phone,
+                          }
+                        });
+                      }}
+                      isLoading={createListing.isPending}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Approve as Listing
+                    </Button>
+                  )}
+                  <div className="ml-auto">
+                    <Button variant="ghost" size="sm" onClick={() => delVendor.mutate({ id: v.id })} disabled={delVendor.isPending} className="text-destructive hover:bg-red-50">
+                      <Trash2 className="w-4 h-4 mr-1" /> Delete
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* SITE SETTINGS */}
