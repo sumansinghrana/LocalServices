@@ -34,10 +34,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex justify-between items-center h-20">
             <Link href="/" className="flex items-center gap-2 group">
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl group-hover:rotate-12 transition-transform duration-300 shadow-lg shadow-primary/20">
-                LS
+                LH
               </div>
               <span className="font-display font-bold text-2xl tracking-tight text-foreground">
-                Local<span className="text-primary">Services</span>
+                local<span className="text-primary">helps</span>.in
               </span>
             </Link>
 
@@ -111,7 +111,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
             <span className="font-display font-bold text-xl text-foreground">
-              Local<span className="text-primary">Services</span>.com
+              local<span className="text-primary">helps</span>.in
             </span>
             <p className="text-muted-foreground mt-2 font-medium">{config?.tagline || "Your trusted local marketplace in Bidholi."}</p>
           </div>
