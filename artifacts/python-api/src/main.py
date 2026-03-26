@@ -143,6 +143,41 @@ def delete_vendor_submission(id: int):
     conn.commit(); cur.close(); conn.close()
     return {"success": True}
 
+@app.post("/api/vendor-submissions/{id}/approve")
+def approve_vendor(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE vendor_submissions SET status='approved' WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Submission not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+@app.post("/api/vendor-submissions/{id}/reject")
+def reject_vendor(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE vendor_submissions SET status='rejected' WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Submission not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+@app.get("/api/providers")
+def list_providers(category: Optional[str] = None):
+    conn = get_connection()
+    cur = conn.cursor()
+    query = "SELECT * FROM vendor_submissions WHERE status='approved' AND submission_type='service'"
+    params = []
+    if category:
+        query += " AND service_category=%s"
+        params.append(category)
+    query += " ORDER BY created_at DESC"
+    cur.execute(query, params)
+    rows = [_camel(dict(r)) for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return rows
+
 
 # ─── Site Config ──────────────────────────────────────────────────────────────
 

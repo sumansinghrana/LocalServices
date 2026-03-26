@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Lock, Calendar, Home, Users, Loader2, Settings, Wrench, Plus, Phone, MessageCircle, MapPin, FileText, ChevronDown, ChevronUp } from "lucide-react";
-import { useSiteConfig, useServicesConfig, useUpdateConfig, useAddService, useDeleteService } from "@/hooks/useConfig";
+import { Trash2, Lock, Calendar, Home, Users, Loader2, Settings, Wrench, Plus, Phone, MessageCircle, MapPin, FileText, ChevronDown, ChevronUp, CheckCircle, XCircle } from "lucide-react";
+import { useSiteConfig, useServicesConfig, useUpdateConfig, useAddService, useDeleteService, useApproveVendor, useRejectVendor } from "@/hooks/useConfig";
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -130,6 +130,8 @@ export default function Admin() {
       onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/vendor-submissions"] }); toast({ title: "Deleted" }); }
     }
   });
+  const approveVendor = useApproveVendor();
+  const rejectVendor = useRejectVendor();
   const updateConfig = useUpdateConfig();
   const addService = useAddService();
   const deleteService = useDeleteService();
@@ -451,6 +453,13 @@ export default function Admin() {
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${v.submissionType === 'service' ? 'bg-orange-100 text-orange-700' : 'bg-teal-100 text-teal-700'}`}>
                       {v.submissionType === 'service' ? '🔧 Service Provider' : '🏠 Room / PG Owner'}
                     </span>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      v.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      v.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {v.status === 'approved' ? '✓ Approved' : v.status === 'rejected' ? '✗ Rejected' : '⏳ Pending'}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {v.createdAt ? new Date(v.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
                     </span>
@@ -503,7 +512,25 @@ export default function Admin() {
                       <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
                     </Button>
                   </a>
-                  {v.submissionType === 'room' && v.roomTitle && (
+
+                  {/* Service Provider: Approve as Provider */}
+                  {v.submissionType === 'service' && v.status !== 'approved' && (
+                    <Button
+                      size="sm"
+                      className="gap-1 bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        approveVendor.mutate(v.id, {
+                          onSuccess: () => toast({ title: "Provider approved!", description: `${v.name} is now visible to customers.` })
+                        });
+                      }}
+                      isLoading={approveVendor.isPending}
+                    >
+                      <CheckCircle className="w-3.5 h-3.5" /> Approve as Provider
+                    </Button>
+                  )}
+
+                  {/* PG/Room Owner: Approve as Listing */}
+                  {(v.submissionType === 'room' || v.submissionType === 'pg') && v.roomTitle && v.status !== 'approved' && (
                     <Button
                       size="sm"
                       className="gap-1 bg-teal-600 hover:bg-teal-700"
@@ -517,12 +544,31 @@ export default function Admin() {
                             contact: v.phone,
                           }
                         });
+                        approveVendor.mutate(v.id);
                       }}
                       isLoading={createListing.isPending}
                     >
                       <Plus className="w-3.5 h-3.5" /> Approve as Listing
                     </Button>
                   )}
+
+                  {/* Reject button (only shown if not already rejected) */}
+                  {v.status !== 'rejected' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => {
+                        rejectVendor.mutate(v.id, {
+                          onSuccess: () => toast({ title: "Application rejected", description: `${v.name}'s application has been rejected.` })
+                        });
+                      }}
+                      isLoading={rejectVendor.isPending}
+                    >
+                      <XCircle className="w-3.5 h-3.5" /> Reject
+                    </Button>
+                  )}
+
                   <div className="ml-auto">
                     <Button variant="ghost" size="sm" onClick={() => delVendor.mutate({ id: v.id })} disabled={delVendor.isPending} className="text-destructive hover:bg-red-50">
                       <Trash2 className="w-4 h-4 mr-1" /> Delete

@@ -86,3 +86,56 @@ export function useDeleteService() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["services-config"] }),
   });
 }
+
+export type Provider = {
+  id: number;
+  name: string;
+  phone: string;
+  submissionType: string;
+  serviceCategory?: string;
+  serviceDescription?: string;
+  status: string;
+  createdAt: string;
+};
+
+export function useProviders(category?: string) {
+  return useQuery<Provider[]>({
+    queryKey: ["providers", category],
+    queryFn: async () => {
+      const url = category
+        ? `${BASE}/api/providers?category=${encodeURIComponent(category)}`
+        : `${BASE}/api/providers`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch providers");
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+}
+
+export function useApproveVendor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`${BASE}/api/vendor-submissions/${id}/approve`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to approve vendor");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor-submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["providers"] });
+    },
+  });
+}
+
+export function useRejectVendor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`${BASE}/api/vendor-submissions/${id}/reject`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed to reject vendor");
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/vendor-submissions"] }),
+  });
+}

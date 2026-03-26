@@ -49,8 +49,12 @@ def init_db():
             room_price REAL,
             room_location TEXT,
             room_type TEXT,
+            status TEXT DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT NOW()
         )
+    """)
+    cur.execute("""
+        ALTER TABLE vendor_submissions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'
     """)
 
     cur.execute("""
