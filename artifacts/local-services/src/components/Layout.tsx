@@ -12,7 +12,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const phone = config?.phone || "+91-9999999999";
   const whatsapp = config?.whatsapp || "919999999999";
-  const locationLabel = config?.location || "Bidholi & UPES Area, Dehradun";
+  const locationLabel = config?.location || "Dehradun near UPES College";
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -27,7 +27,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Top Banner */}
       <div className="bg-secondary text-secondary-foreground py-2 px-4 text-sm font-medium flex justify-center items-center gap-2">
         <MapPin className="w-4 h-4" />
-        Serving {locationLabel}
+        Serving in {locationLabel}
       </div>
 
       {/* Navbar */}
