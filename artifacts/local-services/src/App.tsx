@@ -11,12 +11,14 @@ import Book from "@/pages/Book";
 import PgHostel from "@/pages/PgHostel";
 import VendorSubmit from "@/pages/VendorSubmit";
 import Admin from "@/pages/Admin";
+import BikeRental from "@/pages/BikeRental";
+import TiffinServices from "@/pages/TiffinServices";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
     },
   },
 });
@@ -29,6 +31,8 @@ function Router() {
         <Route path="/services/:category" component={Services} />
         <Route path="/book" component={Book} />
         <Route path="/pg-hostel" component={PgHostel} />
+        <Route path="/bike-rental" component={BikeRental} />
+        <Route path="/tiffin" component={TiffinServices} />
         <Route path="/vendor-submit" component={VendorSubmit} />
         <Route path="/admin" component={Admin} />
         <Route component={NotFound} />

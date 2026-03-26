@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, CalendarIcon, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useServicesConfig } from "@/hooks/useConfig";
+import { useSEO } from "@/hooks/useSEO";
+
+const today = new Date().toISOString().split("T")[0];
 
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -21,7 +24,19 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const categoryLabels: Record<string, string> = {
+  repairs: "Repairs & Maintenance",
+  cleaning: "Cleaning Services",
+  painting: "Painting & Waterproofing",
+  moving: "Packers & Movers",
+};
+
 export default function Book() {
+  useSEO(
+    "Book a Service near UPES Bidholi Dehradun",
+    "Book electricians, plumbers, cleaners, painters and movers near UPES Bidholi Dehradun. Fast confirmation on localhelps.in."
+  );
+
   const [, setLocation] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const initialService = searchParams.get("service") || "";
@@ -43,7 +58,7 @@ export default function Book() {
     mutation: {
       onSuccess: () => {
         toast({
-          title: "Booking Confirmed! 🎉",
+          title: "Booking Confirmed!",
           description: "We'll contact you shortly to confirm details.",
         });
       },
@@ -61,10 +76,19 @@ export default function Book() {
     mutate({ data });
   };
 
+  // Group services by category dynamically
+  const grouped = services
+    ? services.reduce<Record<string, typeof services>>((acc, s) => {
+        if (!acc[s.category]) acc[s.category] = [];
+        acc[s.category].push(s);
+        return acc;
+      }, {})
+    : {};
+
   if (isSuccess) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           className="max-w-md w-full text-center"
@@ -73,7 +97,7 @@ export default function Book() {
             <CheckCircle2 className="w-24 h-24 text-green-500 mx-auto mb-6" />
             <h2 className="text-3xl font-display font-bold mb-4">Request Received!</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Thank you for choosing LocalServices. Our professional will be in touch with you shortly.
+              Thank you for choosing localhelps.in. Our professional will be in touch with you shortly.
             </p>
             <Button size="lg" onClick={() => setLocation("/")} className="w-full">
               Back to Home
@@ -97,9 +121,9 @@ export default function Book() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-foreground">Full Name</label>
-                <Input 
-                  placeholder="Rahul Kumar" 
-                  {...form.register("name")} 
+                <Input
+                  placeholder="Rahul Kumar"
+                  {...form.register("name")}
                   error={!!form.formState.errors.name}
                 />
                 {form.formState.errors.name && (
@@ -108,10 +132,10 @@ export default function Book() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-foreground">Phone Number</label>
-                <Input 
-                  placeholder="9876543210" 
+                <Input
+                  placeholder="9876543210"
                   type="tel"
-                  {...form.register("phone")} 
+                  {...form.register("phone")}
                   error={!!form.formState.errors.phone}
                 />
                 {form.formState.errors.phone && (
@@ -135,25 +159,13 @@ export default function Book() {
                   }`}
                 >
                   <option value="">— Select a service —</option>
-                  {services && services.length > 0 && (
-                    <>
-                      <optgroup label="Repairs & Maintenance">
-                        {services.filter(s => s.category === "repairs").map(s => (
-                          <option key={s.id} value={s.name}>{s.name}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Cleaning">
-                        {services.filter(s => s.category === "cleaning").map(s => (
-                          <option key={s.id} value={s.name}>{s.name}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Painting & Waterproofing">
-                        {services.filter(s => s.category === "painting").map(s => (
-                          <option key={s.id} value={s.name}>{s.name}</option>
-                        ))}
-                      </optgroup>
-                    </>
-                  )}
+                  {Object.entries(grouped).map(([cat, items]) => (
+                    <optgroup key={cat} label={categoryLabels[cat] || cat}>
+                      {items.map(s => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
               )}
               {form.formState.errors.service && (
@@ -164,9 +176,10 @@ export default function Book() {
             <div className="space-y-2">
               <label className="text-sm font-bold text-foreground">Preferred Date</label>
               <div className="relative">
-                <Input 
-                  type="date" 
-                  {...form.register("date")} 
+                <Input
+                  type="date"
+                  min={today}
+                  {...form.register("date")}
                   error={!!form.formState.errors.date}
                   className="pl-12"
                 />
@@ -179,7 +192,7 @@ export default function Book() {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-foreground">Full Address (Bidholi / UPES Area)</label>
-              <textarea 
+              <textarea
                 className={`flex w-full rounded-xl border-2 bg-white px-4 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 transition-all duration-200 min-h-[100px] resize-y ${
                   form.formState.errors.address ? "border-destructive" : "border-border"
                 }`}
