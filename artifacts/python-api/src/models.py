@@ -44,3 +44,19 @@ class PasswordVerify(BaseModel):
 class PasswordChange(BaseModel):
     currentPassword: str
     newPassword: str
+
+class BikeRentalCreate(BaseModel):
+    vendorName: str
+    contact: str
+    bikeName: str
+    pricePerDay: float
+    location: str
+    description: Optional[str] = None
+
+class TiffinCreate(BaseModel):
+    vendorName: str
+    contact: str
+    planType: str
+    price: float
+    description: Optional[str] = None
+    location: str

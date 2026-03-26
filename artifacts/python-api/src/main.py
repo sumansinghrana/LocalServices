@@ -1,13 +1,19 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from typing import Optional
 from datetime import datetime
 
 from database import get_connection, init_db
-from models import BookingCreate, ListingCreate, VendorSubmitInput, SiteConfigUpdate, ServiceCreate, PasswordVerify, PasswordChange
+from models import (
+    BookingCreate, ListingCreate, VendorSubmitInput,
+    SiteConfigUpdate, ServiceCreate,
+    PasswordVerify, PasswordChange,
+    BikeRentalCreate, TiffinCreate,
+)
 
-app = FastAPI(title="LocalServices API")
+app = FastAPI(title="LocalHelps.in API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -215,6 +221,15 @@ def get_services():
     cur.close(); conn.close()
     return rows
 
+@app.get("/api/services-config/categories")
+def get_categories():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT category FROM services_config WHERE active=TRUE ORDER BY category")
+    rows = [r["category"] for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return rows
+
 @app.post("/api/services-config")
 def add_service(body: ServiceCreate):
     conn = get_connection()
@@ -266,6 +281,156 @@ def change_password(body: PasswordChange):
     )
     conn.commit(); cur.close(); conn.close()
     return {"success": True, "message": "Password updated successfully"}
+
+
+# ─── Bike Rentals ─────────────────────────────────────────────────────────────
+
+@app.get("/api/bikes")
+def list_bikes():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM bike_rentals WHERE status='active' AND availability=TRUE ORDER BY created_at DESC")
+    rows = [_camel(dict(r)) for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return rows
+
+@app.get("/api/bikes/all")
+def list_all_bikes():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM bike_rentals ORDER BY created_at DESC")
+    rows = [_camel(dict(r)) for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return rows
+
+@app.post("/api/bikes")
+def create_bike(body: BikeRentalCreate):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """INSERT INTO bike_rentals (vendor_name,contact,bike_name,price_per_day,location,description)
+           VALUES (%s,%s,%s,%s,%s,%s) RETURNING *""",
+        (body.vendorName, body.contact, body.bikeName, body.pricePerDay, body.location, body.description)
+    )
+    row = _camel(dict(cur.fetchone()))
+    conn.commit(); cur.close(); conn.close()
+    return row
+
+@app.post("/api/bikes/{id}/approve")
+def approve_bike(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE bike_rentals SET status='active' WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Bike not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+@app.post("/api/bikes/{id}/reject")
+def reject_bike(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE bike_rentals SET status='rejected' WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Bike not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+@app.delete("/api/bikes/{id}")
+def delete_bike(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM bike_rentals WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Bike not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+
+# ─── Tiffin Services ──────────────────────────────────────────────────────────
+
+@app.get("/api/tiffin")
+def list_tiffin():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM tiffin_services WHERE status='active' ORDER BY price ASC")
+    rows = [_camel(dict(r)) for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return rows
+
+@app.get("/api/tiffin/all")
+def list_all_tiffin():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM tiffin_services ORDER BY created_at DESC")
+    rows = [_camel(dict(r)) for r in cur.fetchall()]
+    cur.close(); conn.close()
+    return rows
+
+@app.post("/api/tiffin")
+def create_tiffin(body: TiffinCreate):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """INSERT INTO tiffin_services (vendor_name,contact,plan_type,price,description,location)
+           VALUES (%s,%s,%s,%s,%s,%s) RETURNING *""",
+        (body.vendorName, body.contact, body.planType, body.price, body.description, body.location)
+    )
+    row = _camel(dict(cur.fetchone()))
+    conn.commit(); cur.close(); conn.close()
+    return row
+
+@app.post("/api/tiffin/{id}/approve")
+def approve_tiffin(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE tiffin_services SET status='active' WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Tiffin not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+@app.post("/api/tiffin/{id}/reject")
+def reject_tiffin(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE tiffin_services SET status='rejected' WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Tiffin not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+@app.delete("/api/tiffin/{id}")
+def delete_tiffin(id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM tiffin_services WHERE id=%s RETURNING id", (id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Tiffin not found")
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True}
+
+
+# ─── Sitemap ──────────────────────────────────────────────────────────────────
+
+@app.get("/sitemap.xml")
+def sitemap():
+    base = "https://localhelps.in"
+    urls = [
+        "/", "/pg-hostel", "/book", "/vendor-submit",
+        "/services/repairs", "/services/cleaning",
+        "/services/painting", "/services/moving",
+        "/bike-rental", "/tiffin",
+    ]
+    items = "\n".join(
+        f"""  <url><loc>{base}{u}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>"""
+        for u in urls
+    )
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{items}
+</urlset>"""
+    return Response(content=xml, media_type="application/xml")
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

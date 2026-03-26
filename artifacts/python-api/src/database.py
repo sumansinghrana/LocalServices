@@ -53,9 +53,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT NOW()
         )
     """)
-    cur.execute("""
-        ALTER TABLE vendor_submissions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'
-    """)
+    cur.execute("ALTER TABLE vendor_submissions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'")
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS site_config (
@@ -77,6 +75,36 @@ def init_db():
     """)
 
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS bike_rentals (
+            id SERIAL PRIMARY KEY,
+            vendor_name TEXT NOT NULL,
+            contact TEXT NOT NULL,
+            bike_name TEXT NOT NULL,
+            price_per_day REAL NOT NULL,
+            location TEXT NOT NULL,
+            description TEXT,
+            availability BOOLEAN DEFAULT TRUE,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS tiffin_services (
+            id SERIAL PRIMARY KEY,
+            vendor_name TEXT NOT NULL,
+            contact TEXT NOT NULL,
+            plan_type TEXT NOT NULL,
+            price REAL NOT NULL,
+            description TEXT,
+            location TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+
+    # Site config seed
+    cur.execute("""
         INSERT INTO site_config (key, value)
         VALUES
             ('phone', '+91-9999999999'),
@@ -87,6 +115,7 @@ def init_db():
         ON CONFLICT (key) DO NOTHING
     """)
 
+    # Services seed
     cur.execute("SELECT COUNT(*) as cnt FROM services_config")
     row = cur.fetchone()
     if row["cnt"] == 0:
@@ -97,6 +126,8 @@ def init_db():
             ("cleaning", "Home Cleaning"),
             ("cleaning", "Sofa & Carpet Cleaning"),
             ("cleaning", "Kitchen Deep Clean"),
+            ("painting", "Wall Painting"),
+            ("painting", "Waterproofing"),
             ("moving", "Packers & Movers"),
             ("moving", "Bike Transport"),
             ("moving", "Mini Truck Rental"),
@@ -104,6 +135,42 @@ def init_db():
         cur.executemany(
             "INSERT INTO services_config (category, name) VALUES (%s, %s)",
             services
+        )
+
+    # Seed demo bikes if empty
+    cur.execute("SELECT COUNT(*) as cnt FROM bike_rentals")
+    brow = cur.fetchone()
+    if brow["cnt"] == 0:
+        bikes = [
+            ("Demo Vendor", "9999999999", "Hero Splendor Plus", 200.0, "Near UPES Gate, Bidholi",
+             "Well maintained bike, full tank provided", True, "active"),
+            ("Demo Vendor", "9999999999", "Honda Activa 6G", 250.0, "Kandoli Chowk, Bidholi",
+             "Automatic scooter, ideal for city rides", True, "active"),
+        ]
+        cur.executemany(
+            """INSERT INTO bike_rentals
+               (vendor_name,contact,bike_name,price_per_day,location,description,availability,status)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+            bikes
+        )
+
+    # Seed demo tiffin if empty
+    cur.execute("SELECT COUNT(*) as cnt FROM tiffin_services")
+    trow = cur.fetchone()
+    if trow["cnt"] == 0:
+        tiffins = [
+            ("Ghar Ka Khana", "9888888888", "1_time", 60.0,
+             "Dinner only — 2 chapati, sabzi, dal, rice", "Bidholi Campus Area", "active"),
+            ("Ghar Ka Khana", "9888888888", "2_time", 110.0,
+             "Lunch + Dinner — full home-style meal", "Bidholi Campus Area", "active"),
+            ("Ghar Ka Khana", "9888888888", "3_time", 150.0,
+             "Breakfast + Lunch + Dinner — complete daily meal", "Bidholi Campus Area", "active"),
+        ]
+        cur.executemany(
+            """INSERT INTO tiffin_services
+               (vendor_name,contact,plan_type,price,description,location,status)
+               VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+            tiffins
         )
 
     conn.commit()

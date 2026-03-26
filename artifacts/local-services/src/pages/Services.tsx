@@ -4,19 +4,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Check, Loader2, Phone, MessageCircle, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useServicesConfig, useProviders } from "@/hooks/useConfig";
+import { useSEO } from "@/hooks/useSEO";
 
-const categoryMeta: Record<string, { title: string; desc: string }> = {
+const categoryMeta: Record<string, { title: string; desc: string; seoTitle: string; seoDesc: string }> = {
   repairs: {
     title: "Repairs & Maintenance",
-    desc: "Expert electricians, plumbers, and carpenters at your doorstep.",
+    desc: "Expert electricians, plumbers, and carpenters at your doorstep in Bidholi.",
+    seoTitle: "Electrician & Plumber in Bidholi Dehradun near UPES",
+    seoDesc: "Book trusted electricians, plumbers and carpenters near UPES Bidholi, Dehradun. Same-day service available.",
   },
   cleaning: {
     title: "Cleaning Services",
-    desc: "Professional cleaning for a spotless living space.",
+    desc: "Professional cleaning for a spotless living space near UPES.",
+    seoTitle: "Home Cleaning Services near UPES Bidholi Dehradun",
+    seoDesc: "Professional home, sofa, and kitchen cleaning services near UPES Bidholi. Book online on localhelps.in.",
   },
   painting: {
     title: "Painting & Waterproofing",
-    desc: "Transform your space with fresh colors.",
+    desc: "Transform your space with fresh colors and leak-free walls.",
+    seoTitle: "Painting & Waterproofing in Bidholi Dehradun",
+    seoDesc: "Wall painting and waterproofing services near UPES campus Bidholi. Affordable rates, verified professionals.",
+  },
+  moving: {
+    title: "Packers & Movers",
+    desc: "Shift your belongings safely anywhere in Dehradun.",
+    seoTitle: "Packers and Movers near UPES Bidholi Dehradun",
+    seoDesc: "Reliable packers and movers, bike transport and mini truck rental near UPES Bidholi, Dehradun.",
   },
 };
 
@@ -26,6 +39,11 @@ export default function Services() {
   const { data: providers } = useProviders(category);
 
   const meta = category ? categoryMeta[category] : undefined;
+
+  useSEO(
+    meta?.seoTitle || (category ? `${category} services near UPES Bidholi` : "Services"),
+    meta?.seoDesc
+  );
 
   if (!meta && !isLoading) {
     return (
@@ -98,7 +116,7 @@ export default function Services() {
               <h2 className="text-2xl font-bold">Our Verified Partners</h2>
             </div>
             <p className="text-muted-foreground mb-6 -mt-2">
-              These local professionals have been verified by LocalHelps.in. Contact them directly.
+              These local professionals have been verified by localhelps.in. Contact them directly.
             </p>
             <div className="grid sm:grid-cols-2 gap-5">
               {providers.map((provider, i) => (
