@@ -5,7 +5,7 @@ from typing import Optional
 from datetime import datetime
 
 from database import get_connection, init_db
-from models import BookingCreate, ListingCreate, VendorSubmitInput, SiteConfigUpdate, ServiceCreate
+from models import BookingCreate, ListingCreate, VendorSubmitInput, SiteConfigUpdate, ServiceCreate, PasswordVerify, PasswordChange
 
 app = FastAPI(title="LocalServices API")
 
@@ -201,6 +201,36 @@ def delete_service(id: int):
         raise HTTPException(status_code=404, detail="Service not found")
     conn.commit(); cur.close(); conn.close()
     return {"success": True}
+
+
+# ─── Admin Password ───────────────────────────────────────────────────────────
+
+@app.post("/api/admin/verify")
+def verify_password(body: PasswordVerify):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM site_config WHERE key='admin_password'")
+    row = cur.fetchone()
+    cur.close(); conn.close()
+    if not row or row["value"] != body.password:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    return {"success": True}
+
+@app.post("/api/admin/change-password")
+def change_password(body: PasswordChange):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM site_config WHERE key='admin_password'")
+    row = cur.fetchone()
+    if not row or row["value"] != body.currentPassword:
+        cur.close(); conn.close()
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    cur.execute(
+        "UPDATE site_config SET value=%s, updated_at=NOW() WHERE key='admin_password'",
+        (body.newPassword,)
+    )
+    conn.commit(); cur.close(); conn.close()
+    return {"success": True, "message": "Password updated successfully"}
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────

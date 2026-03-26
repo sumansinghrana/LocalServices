@@ -78,7 +78,8 @@ def init_db():
             ('phone', '+91-9999999999'),
             ('whatsapp', '919999999999'),
             ('location', 'Bidholi, Dehradun'),
-            ('tagline', 'Trusted local services near UPES')
+            ('tagline', 'Trusted local services near UPES'),
+            ('admin_password', 'admin123')
         ON CONFLICT (key) DO NOTHING
     """)
 

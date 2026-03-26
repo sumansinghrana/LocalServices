@@ -37,3 +37,10 @@ class SiteConfigUpdate(BaseModel):
 class ServiceCreate(BaseModel):
     category: str
     name: str
+
+class PasswordVerify(BaseModel):
+    password: str
+
+class PasswordChange(BaseModel):
+    currentPassword: str
+    newPassword: str

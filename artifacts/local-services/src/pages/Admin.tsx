@@ -16,19 +16,65 @@ import { useSiteConfig, useServicesConfig, useUpdateConfig, useAddService, useDe
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"bookings" | "listings" | "vendors" | "settings" | "services">("bookings");
   const [showAddListing, setShowAddListing] = useState(false);
   const [listingForm, setListingForm] = useState({
     title: "", type: "pg" as "pg" | "hostel" | "room",
     price: "", location: "", contact: "", description: "", imageUrl: ""
   });
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwLoading, setPwLoading] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "admin123") setIsAuthenticated(true);
-    else toast({ variant: "destructive", title: "Invalid password" });
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) setIsAuthenticated(true);
+      else toast({ variant: "destructive", title: "Invalid password" });
+    } catch {
+      toast({ variant: "destructive", title: "Could not connect to server" });
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pwForm.next !== pwForm.confirm) {
+      toast({ variant: "destructive", title: "New passwords do not match" });
+      return;
+    }
+    if (pwForm.next.length < 6) {
+      toast({ variant: "destructive", title: "Password must be at least 6 characters" });
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const res = await fetch("/api/admin/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.next }),
+      });
+      if (res.ok) {
+        toast({ title: "Password changed!", description: "Use your new password next time you log in." });
+        setPwForm({ current: "", next: "", confirm: "" });
+      } else {
+        const data = await res.json();
+        toast({ variant: "destructive", title: data.detail || "Failed to change password" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "Could not connect to server" });
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   // Data Hooks
@@ -135,13 +181,13 @@ export default function Admin() {
           </div>
           <h1 className="text-2xl font-bold text-center mb-6">Admin Access</h1>
           <form onSubmit={handleLogin} className="space-y-4">
-            <Input 
-              type="password" 
-              placeholder="Enter password (admin123)" 
+            <Input
+              type="password"
+              placeholder="Enter admin password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <Button type="submit" className="w-full">Login</Button>
+            <Button type="submit" className="w-full" isLoading={loginLoading}>Login</Button>
           </form>
         </Card>
       </div>
@@ -551,6 +597,48 @@ export default function Admin() {
                   </Button>
                 </form>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Change Password */}
+          <Card className="border-none shadow-xl bg-white">
+            <CardContent className="p-8">
+              <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-primary" /> Change Admin Password
+              </h2>
+              <p className="text-muted-foreground text-sm mb-6">Update your admin login password. You'll need your current password to set a new one.</p>
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold">Current Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Enter current password"
+                    value={pwForm.current}
+                    onChange={e => setPwForm({ ...pwForm, current: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold">New Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Min. 6 characters"
+                    value={pwForm.next}
+                    onChange={e => setPwForm({ ...pwForm, next: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold">Confirm New Password</label>
+                  <Input
+                    type="password"
+                    placeholder="Repeat new password"
+                    value={pwForm.confirm}
+                    onChange={e => setPwForm({ ...pwForm, confirm: e.target.value })}
+                  />
+                </div>
+                <Button type="submit" className="w-full mt-2" isLoading={pwLoading}>
+                  Update Password
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </div>
