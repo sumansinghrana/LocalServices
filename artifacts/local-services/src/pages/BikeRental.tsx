@@ -9,7 +9,7 @@ import { useSEO } from "@/hooks/useSEO";
 export default function BikeRental() {
   useSEO(
     "Bike Rental near UPES Bidholi Dehradun",
-    "Rent bikes near UPES Bidholi campus, Dehradun. Daily rental from ₹150/day. Book online on localhelps.in."
+    "Rent bikes near UPES Bidholi campus, Dehradun. Daily rental from ₹350/day. Book online on localhelps.in."
   );
 
   const { data: bikes, isLoading } = useBikes();
@@ -38,7 +38,7 @@ export default function BikeRental() {
         <div className="grid sm:grid-cols-3 gap-4 mb-10">
           {[
             { icon: "🏍️", title: "Various Models", desc: "Scooters, bikes & more" },
-            { icon: "💰", title: "Affordable Rates", desc: "Starting from ₹150/day" },
+            { icon: "💰", title: "Affordable Rates", desc: "Starting from ₹350/day" },
             { icon: "📍", title: "Near Campus", desc: "Pickup near UPES Bidholi" },
           ].map((item, i) => (
             <div key={i} className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
