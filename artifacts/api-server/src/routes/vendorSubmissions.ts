@@ -20,6 +20,22 @@ router.get("/vendor-submissions", async (_req, res) => {
   res.json(submissions);
 });
 
+router.post("/vendor-submissions/:id/approve", async (req, res) => {
+  const parsed = DeleteVendorSubmissionParams.safeParse({ id: Number(req.params.id) });
+  if (!parsed.success) { res.status(400).json({ error: "Invalid id" }); return; }
+  const updated = await db.update(vendorSubmissionsTable).set({ status: "approved" }).where(eq(vendorSubmissionsTable.id, parsed.data.id)).returning();
+  if (updated.length === 0) { res.status(404).json({ error: "Submission not found" }); return; }
+  res.json({ success: true });
+});
+
+router.post("/vendor-submissions/:id/reject", async (req, res) => {
+  const parsed = DeleteVendorSubmissionParams.safeParse({ id: Number(req.params.id) });
+  if (!parsed.success) { res.status(400).json({ error: "Invalid id" }); return; }
+  const updated = await db.update(vendorSubmissionsTable).set({ status: "rejected" }).where(eq(vendorSubmissionsTable.id, parsed.data.id)).returning();
+  if (updated.length === 0) { res.status(404).json({ error: "Submission not found" }); return; }
+  res.json({ success: true });
+});
+
 router.delete("/vendor-submissions/:id", async (req, res) => {
   const parsed = DeleteVendorSubmissionParams.safeParse({ id: Number(req.params.id) });
   if (!parsed.success) {

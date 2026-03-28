@@ -14,6 +14,7 @@ export const vendorSubmissionsTable = pgTable("vendor_submissions", {
   roomLocation: text("room_location"),
   roomType: text("room_type"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  status: text("status").default("pending"),
 });
 
 export const insertVendorSubmissionSchema = createInsertSchema(vendorSubmissionsTable).omit({ id: true, createdAt: true });
