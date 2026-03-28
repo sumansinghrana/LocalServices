@@ -1,0 +1,22 @@
+(.venv) PS C:\Users\rawat\git_project\LocalServices\artifacts\api-server> $env:PORT="5173"
+(.venv) PS C:\Users\rawat\git_project\LocalServices\artifacts\api-server> pnpm --filter @workspace/local-services run dev
+
+> @workspace/local-services@0.0.0 dev C:\Users\rawat\git_project\LocalServices\artifacts\local-services
+> vite --config vite.config.ts --host 0.0.0.0
+
+failed to load config from C:\Users\rawat\git_project\LocalServices\artifacts\local-services\vite.config.ts
+error when starting dev server:
+Error: BASE_PATH environment variable is required but was not provided.
+    at file:///C:/Users/rawat/git_project/LocalServices/artifacts/local-services/node_modules/.vite-temp/vite.config.ts.timestamp-1774550770532-283b771ffe0af8.mjs:20:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+    at async loadConfigFromBundledFile (file:///C:/Users/rawat/git_project/LocalServices/node_modules/.pnpm/vite@7.3.1_@types+node@25.5_dd6475a36cad374b548325afcd4c0c34/node_modules/vite/dist/node/chunks/config.js:35909:12) 
+    at async bundleAndLoadConfigFile (file:///C:/Users/rawat/git_project/LocalServices/node_modules/.pnpm/vite@7.3.1_@types+node@25.5_dd6475a36cad374b548325afcd4c0c34/node_modules/vite/dist/node/chunks/config.js:35797:17)   
+    at async loadConfigFromFile (file:///C:/Users/rawat/git_project/LocalServices/node_modules/.pnpm/vite@7.3.1_@types+node@25.5_dd6475a36cad374b548325afcd4c0c34/node_modules/vite/dist/node/chunks/config.js:35764:42)        
+    at async resolveConfig (file:///C:/Users/rawat/git_project/LocalServices/node_modules/.pnpm/vite@7.3.1_@types+node@25.5_dd6475a36cad374b548325afcd4c0c34/node_modules/vite/dist/node/chunks/config.js:35413:22)
+    at async _createServer (file:///C:/Users/rawat/git_project/LocalServices/node_modules/.pnpm/vite@7.3.1_@types+node@25.5_dd6475a36cad374b548325afcd4c0c34/node_modules/vite/dist/node/chunks/config.js:25362:67)
+    at async CAC.<anonymous> (file:///C:/Users/rawat/git_project/LocalServices/node_modules/.pnpm/vite@7.3.1_@types+node@25.5_dd6475a36cad374b548325afcd4c0c34/node_modules/vite/dist/node/cli.js:572:18)
+C:\Users\rawat\git_project\LocalServices\artifacts\local-services:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/local-services@0.0.0 dev: `vite --config vite.config.ts --host 0.0.0.0`
+Exit status 1
+(.venv) PS C:\Users\rawat\git_project\LocalServices\artifacts\api-server> 
